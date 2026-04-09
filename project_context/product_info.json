@@ -1,0 +1,48 @@
+{
+  "productName": "",
+  "direction": "",
+  "size": {
+    "dimensions": "",
+    "scale": "",
+    "notes": ""
+  },
+  "color": {
+    "palette": [],
+    "primary": "",
+    "secondary": "",
+    "notes": ""
+  },
+  "form": {
+    "shape": "",
+    "style": "",
+    "aesthetics": "",
+    "notes": ""
+  },
+  "context": {
+    "useCase": "",
+    "environment": "",
+    "targetAudience": "",
+    "notes": ""
+  },
+  "purpose": {
+    "primaryFunction": "",
+    "problemSolved": "",
+    "goals": [],
+    "notes": ""
+  },
+  "cmft": {
+    "certifications": [],
+    "materials": [],
+    "finish": "",
+    "testing": [],
+    "notes": ""
+  },
+  "features": {
+    "core": [],
+    "secondary": [],
+    "innovative": [],
+    "notes": ""
+  },
+  "generalNotes": "",
+  "lastUpdated": ""
+}

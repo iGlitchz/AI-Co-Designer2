@@ -1,0 +1,255 @@
+Creative Component: AI Co-Designer System Audit (Updated)
+Project: simplechatbot
+Date: 2026-04-05
+
+Purpose of this document
+This document reflects the current state of the codebase after recent updates. It maps implemented features to your thesis goals for a phase-adaptive, multimodal, human-in-the-loop AI co-designer.
+
+It explains:
+- What is implemented now
+- Which APIs/libraries power each capability
+- How recent fixes changed behavior
+- Which thesis principles are strongly covered and which are next-step opportunities
+
+==================================================
+1) Current System Architecture (End-to-End)
+==================================================
+
+Runtime structure
+- Frontend web UI served from public/ (chat, whiteboard, project info, settings, visual tools)
+- Backend API in server.js (chat orchestration, streaming, vision analysis, product info extraction, image generation, TTS)
+- Electron wrapper in electron/main.js (desktop mode and bubble mode)
+
+Current model/runtime path
+- Primary chat model route: OpenRouter
+- Primary model: google/gemma-3-4b-it
+- Fallback model: google/gemma-3n-e4b-it:free
+- Image generation route: Runware WebSocket API
+- Current image model env: RUNWARE_IMAGE_MODEL (default openai:4@1)
+
+Main workflow
+1. User inputs text, voice, image, screen capture, live camera frame, or whiteboard artifacts.
+2. Frontend sends to /api/chat or /api/chat/stream and/or /api/generate-image and/or /api/tts.
+3. Backend composes system prompt from selected phase mode + selected agents + project context + optional vision analysis.
+4. OpenRouter model responds (streaming where possible, non-stream fallback if stream fails).
+5. Product info is extracted/merged and returned to frontend for auto-fill.
+6. Outputs can be spoken, dragged to whiteboard, or transformed through image generation/remix.
+
+==================================================
+2) Core APIs, Libraries, and External Services
+==================================================
+
+AI reasoning and orchestration
+- OpenRouter chat completions API
+- Model routing in server.js supports explicit model override and strict/no-fallback mode
+
+Vision understanding
+- Google Cloud Vision API
+- Used for labels, OCR text, objects, and color context before reasoning
+
+Image generation and image-to-image
+- Runware WebSocket API (wss://ws-api.runware.ai/v1)
+- Uses imageInference for generation
+- Current implementation supports:
+  - text-to-image
+  - image-to-image with OpenAI image models via inputs.referenceImages
+  - fallback i2i path for non-OpenAI models via imageUpload + seedImage UUID
+
+Speech output
+- kokoro-js + local ONNX assets
+- Endpoint: /api/tts (returns WAV)
+
+Speech input
+- Browser SpeechRecognition/webkitSpeechRecognition
+- Supports dictation and voice mode loops
+
+Other key libraries
+- express, axios, ws, crypto, dotenv, marked
+
+==================================================
+3) Major Recent Updates Reflected in Code
+==================================================
+
+1. Project Info pipeline hardened
+- Product info extraction now consistently merged and returned in chat responses.
+- Frontend sync path updates live project object and reloads form fields reliably.
+- Added ProductInfoDebug logging on both backend and frontend.
+
+2. Streaming reliability improved
+- SSE buffering and residual parsing improved on frontend.
+- Backend /api/chat/stream now falls back to non-stream response if streaming fails.
+
+3. Visual mode behavior now strict
+- When visual mode is enabled, frontend routes message flow to image generation.
+- Attached image, screen capture, and camera frame can feed generation as seed input.
+
+4. Runware model and dimensions standardized
+- Uses RUNWARE_IMAGE_MODEL with explicit 1024x1024 generation dimensions.
+
+5. Image-to-image payload updated for GPT Image models
+- OpenAI image models on Runware now use inputs.referenceImages for i2i.
+- Non-OpenAI path still supports seedImage via imageUpload UUID flow.
+
+6. Bubble mode interaction fixes
+- Bubble titlebar now correctly anchors dropdown overlays.
+- Bubble click-through handling improved so header controls (including eye button) are responsive.
+
+==================================================
+4) Feature Inventory and Thesis Principle Mapping
+==================================================
+
+A) Multimodal co-design input (Strong)
+- Text chat
+- Voice dictation and conversational voice mode
+- Image upload/paste/drag-drop
+- Screen capture and camera vision input
+- Whiteboard artifacts as analysis/remix inputs
+
+Thesis relevance
+- Design dialogue is not text-only; visual and verbal artifacts are first-class inputs.
+
+B) Non-linear remix loop (Strong)
+- Chat-to-whiteboard drag/drop for text and images
+- Whiteboard analyze/remix/feasibility actions
+- Visual mode generation and multi-image requests
+
+Thesis relevance
+- Supports iterative make-critique-remix cycles rather than linear prompt-response use.
+
+C) Iterative memory and continuity (Strong)
+- Project + multi-chat history per project
+- Product info schema with extraction and UI auto-fill
+- Local persistence and context replay in requests
+
+Thesis relevance
+- Enables long-horizon co-design continuity and cumulative context.
+
+D) Human control and agency (Strong)
+- User controls phase mode, specialist agents, vision mode, voice mode, and visual generation paths
+- User can directly curate structured project info fields
+
+Thesis relevance
+- AI acts as configurable collaborator, not autonomous authority.
+
+E) Critical evaluation behavior (Strong)
+- analyze mode overlays phase-specific critique prompts
+- Vision analysis used to ground critique for image-based discussions
+- Feasibility-oriented workflows and CMFT framing supported
+
+Thesis relevance
+- Convergent, skeptical evaluation is operationalized in code.
+
+F) Phase-adaptive cognition (Strong)
+- ideation, conceptualization, and execution prompts loaded from modes.conf
+- Different behavior expectations by phase are enforced at prompt layer
+
+Thesis relevance
+- Matches staged design workflow instead of one static assistant behavior.
+
+G) Diversity generation (Moderate to strong)
+- Multiple agents provide perspective diversity
+- Visual generation can produce variants
+- Remix actions support alternate visual directions
+
+Opportunity
+- Add explicit forced-alternatives controls/metrics for stronger thesis measurability.
+
+==================================================
+5) Current Endpoint Responsibilities
+==================================================
+
+/api/chat
+- Non-streaming response path
+- Applies mode + agents + project context + optional image analysis
+- Returns response + provider/mode metadata + updated productInfo
+
+/api/chat/stream
+- SSE token streaming path
+- Falls back to non-stream response if needed
+- Returns done event containing provider/mode/productInfo
+
+/api/generate-image
+- Builds image prompt with project info context
+- Supports seed-image i2i requests
+- Uses Runware and proxies generated image bytes back to client
+
+/api/tts
+- Generates WAV speech from response text using Kokoro
+
+==================================================
+6) File-to-Capability Map (Current)
+==================================================
+
+Backend orchestration
+- server.js
+
+Mode logic
+- modes.conf
+
+Agent prompts
+- agent_resources/ergonomics_agent.md
+- agent_resources/brand_master.md
+- agent_resources/design_researcher.md
+- agent_resources/cmft_expert.md
+
+Project info schema
+- project_context/product_info.json
+
+Frontend core behavior
+- public/script.js
+- public/index.html
+- public/style.css
+- public/whiteboard-new.js
+- public/settings.js
+
+Bubble mode UI
+- public/bubble.html
+- public/bubble.css
+
+Desktop runtime
+- electron/main.js
+- electron/preload.js
+
+Build/runtime config
+- package.json
+- .env
+
+==================================================
+7) Dependency and Config Snapshot (Current)
+==================================================
+
+Primary required environment keys
+- OPENROUTER_API_KEY
+- GOOGLE_CLOUD_VISION_API_KEY (for image analysis)
+- RUNWARE_API_KEY (for image generation)
+
+Current image model config
+- RUNWARE_IMAGE_MODEL=openai:4@1
+
+Note on legacy config
+- MISTRAL_API_KEY may still exist in .env/package metadata, but active chat path is OpenRouter in current server implementation.
+
+==================================================
+8) Thesis Readiness Snapshot
+==================================================
+
+Strongly addressed now
+- Multimodal interaction
+- Phase-adaptive prompting
+- Human-in-the-loop controls
+- Critical analysis behavior
+- Persistent iterative workflow with structured memory
+- Integrated visual generation/remix pipeline
+
+Partially addressed / next upgrades
+- Add explicit comparison tools (A/B decision matrix, rubric scoring)
+- Add built-in instrumentation for research metrics:
+  - iteration counts
+  - alternatives generated
+  - critique depth indicators
+  - phase transition frequency
+
+Suggested concise thesis framing sentence
+- This prototype demonstrates a phase-adaptive, multimodal, human-in-the-loop AI co-designer that supports iterative divergence and convergence through persistent context, artifact-based interaction, and integrated visual generation workflows.
+
+End of document.

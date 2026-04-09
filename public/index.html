@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creative Whiteboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Top Indicator Bar -->
+    <div class="top-indicator-bar" id="topIndicatorBar"></div>
+    
+    <!-- Projects Menu (Top Level) -->
+    <div class="projects-menu" id="projectsMenu">
+        <div class="projects-scroll" id="projectsScroll">
+            <!-- Projects will be dynamically added here -->
+        </div>
+    </div>
+
+    <!-- Project Context Menu -->
+    <div class="project-context-menu" id="projectContextMenu">
+        <div class="context-menu-item" id="renameProject">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+            </svg>
+            Rename
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item delete" id="deleteProject">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+            Delete
+        </div>
+    </div>
+
+    <!-- Whiteboard Canvas -->
+    <div class="whiteboard-container">
+        <canvas id="whiteboard" class="whiteboard-canvas"></canvas>
+        
+        <!-- Zoom Controls -->
+        <div class="zoom-controls">
+            <button id="zoomOut" class="zoom-btn" title="Zoom Out">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+            <span id="zoomLevel" class="zoom-level">100%</span>
+            <button id="zoomIn" class="zoom-btn" title="Zoom In">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="11" y1="8" x2="11" y2="14"></line>
+                    <line x1="8" y1="11" x2="14" y2="11"></line>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
+            <button id="resetZoom" class="zoom-btn" title="Reset View">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                </svg>
+            </button>
+        </div>
+        
+        <!-- Apple-Style Dock -->
+        <div class="dock-container" id="dockContainer">
+            <div class="dock">
+                <input type="file" id="dockImageInput" accept="image/*" style="display: none;">
+                <button id="uploadImageBtn" class="dock-btn" title="Upload Image">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                    <span>Upload</span>
+                </button>
+                <button id="addSquareBtn" class="dock-btn" title="Add Square">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                    </svg>
+                    <span>Square</span>
+                </button>
+                <button id="addCircleBtn" class="dock-btn" title="Add Circle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9"></circle>
+                    </svg>
+                    <span>Circle</span>
+                </button>
+                <button id="addArrowBtn" class="dock-btn" title="Add Arrow">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="19 12 15 8"></polyline>
+                        <polyline points="19 12 15 16"></polyline>
+                    </svg>
+                    <span>Arrow</span>
+                </button>
+                <button id="addTextBtn" class="dock-btn" title="Add Text">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                        <line x1="9" y1="20" x2="15" y2="20"></line>
+                        <line x1="12" y1="4" x2="12" y2="20"></line>
+                    </svg>
+                    <span>Text</span>
+                </button>
+                <button id="dockAnalyzeBtn" class="dock-btn" title="Look & Analyze" disabled>
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                    <span>Analyze</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Window -->
+    <div class="chat-window" id="chatWindow">
+        <div class="chat-window-header" id="chatWindowHeader">
+            <h2>Co-Designer</h2>
+            <div class="window-controls">
+                <button id="settingsBtn" class="window-btn" title="Settings">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <button id="projectSwitcherBtn" class="window-btn" title="Switch Project">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"></path>
+                    </svg>
+                </button>
+                <button id="eyeBtn" class="window-btn" title="Enable screen capture input">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                    </svg>
+                </button>
+                <button id="minimizeBtn" class="window-btn" title="Minimize">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+            </div>
+            <div id="projectSwitcherMenu" class="project-switcher-menu">
+                <div class="psm-header">Projects</div>
+                <div class="psm-list" id="psmList"></div>
+            </div>
+
+            <!-- Vision mode menu (screen/camera selection) -->
+            <div id="visionModeMenu" class="vision-mode-menu">
+                <div class="vision-header">Vision Mode</div>
+                <div class="vision-option" data-vision-type="screen">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                        <line x1="8" y1="21" x2="16" y2="21"></line>
+                        <line x1="12" y1="17" x2="12" y2="21"></line>
+                    </svg>
+                    <span>Screen</span>
+                </div>
+                <div class="vision-option" data-vision-type="camera">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                    <span>Camera</span>
+                </div>
+                <div class="vision-divider" id="cameraDivider" style="display: none;"></div>
+                <select id="cameraDeviceSelect" style="display: none;" class="camera-device-select">
+                    <option value="">Default Camera</option>
+                </select>
+            </div>
+        </div>
+        
+        <div class="chat-view-switcher">
+            <button id="chatThreadMenuBtn" class="chat-thread-btn" title="Chat History">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="3" y1="6" x2="21" y2="6"></line>
+                    <line x1="3" y1="12" x2="21" y2="12"></line>
+                    <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+            </button>
+            <button class="view-tab active" data-view="chat">Chat</button>
+            <button class="view-tab" data-view="project-info">Project Info</button>
+            <div class="chat-thread-menu" id="chatThreadMenu">
+                <div class="chat-thread-menu-header">
+                    <span>Chat History</span>
+                    <button id="newChatBtn" class="new-chat-btn" type="button">+ New Chat</button>
+                </div>
+                <div class="chat-thread-list" id="chatThreadList"></div>
+            </div>
+        </div>
+
+        <div id="chatDropOverlay" class="chat-drop-overlay" aria-hidden="true">
+            <div class="chat-drop-overlay-text">Drop image into chat</div>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot-message">
+                <div class="message-content">Hello! How can I help you today?</div>
+            </div>
+        </div>
+        
+        <div class="project-info-view" id="projectInfoView" style="display: none;">
+            <div class="product-info-form">
+                <div class="form-section">
+                    <label>Product Name</label>
+                    <input type="text" id="productName" class="form-input" placeholder="Enter product name">
+                </div>
+                <div class="form-section">
+                    <label>Direction</label>
+                    <textarea id="direction" class="form-textarea" rows="2" placeholder="Project direction and vision"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Size & Dimensions</label>
+                    <input type="text" id="sizeDimensions" class="form-input" placeholder="Dimensions">
+                    <input type="text" id="sizeScale" class="form-input" placeholder="Scale">
+                    <textarea id="sizeNotes" class="form-textarea" rows="2" placeholder="Size notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Color</label>
+                    <input type="text" id="colorPalette" class="form-input" placeholder="Palette (comma-separated)">
+                    <input type="text" id="colorPrimary" class="form-input" placeholder="Primary color">
+                    <input type="text" id="colorSecondary" class="form-input" placeholder="Secondary color">
+                    <textarea id="colorNotes" class="form-textarea" rows="2" placeholder="Color notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Form & Aesthetics</label>
+                    <input type="text" id="formShape" class="form-input" placeholder="Shape">
+                    <input type="text" id="formStyle" class="form-input" placeholder="Style">
+                    <input type="text" id="formAesthetics" class="form-input" placeholder="Aesthetics">
+                    <textarea id="formNotes" class="form-textarea" rows="2" placeholder="Form notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Context & Use</label>
+                    <input type="text" id="contextUseCase" class="form-input" placeholder="Use case">
+                    <input type="text" id="contextEnvironment" class="form-input" placeholder="Environment">
+                    <input type="text" id="contextTarget" class="form-input" placeholder="Target audience">
+                    <textarea id="contextNotes" class="form-textarea" rows="2" placeholder="Context notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Purpose & Goals</label>
+                    <input type="text" id="purposeFunction" class="form-input" placeholder="Primary function">
+                    <input type="text" id="purposeProblem" class="form-input" placeholder="Problem solved">
+                    <input type="text" id="purposeGoals" class="form-input" placeholder="Goals (comma-separated)">
+                    <textarea id="purposeNotes" class="form-textarea" rows="2" placeholder="Purpose notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Materials & Finish (CMFT)</label>
+                    <input type="text" id="cmftCertifications" class="form-input" placeholder="Certifications (comma-separated)">
+                    <input type="text" id="cmftMaterials" class="form-input" placeholder="Materials (comma-separated)">
+                    <input type="text" id="cmftFinish" class="form-input" placeholder="Finish">
+                    <input type="text" id="cmftTesting" class="form-input" placeholder="Testing (comma-separated)">
+                    <textarea id="cmftNotes" class="form-textarea" rows="2" placeholder="CMFT notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>Features</label>
+                    <input type="text" id="featuresCore" class="form-input" placeholder="Core features (comma-separated)">
+                    <input type="text" id="featuresSecondary" class="form-input" placeholder="Secondary features (comma-separated)">
+                    <input type="text" id="featuresInnovative" class="form-input" placeholder="Innovative features (comma-separated)">
+                    <textarea id="featuresNotes" class="form-textarea" rows="2" placeholder="Feature notes"></textarea>
+                </div>
+                <div class="form-section">
+                    <label>General Notes</label>
+                    <textarea id="generalNotes" class="form-textarea" rows="3" placeholder="Additional notes"></textarea>
+                </div>
+                <button id="saveProductInfo" class="save-btn">Save Product Info</button>
+            </div>
+        </div>
+        
+        <div class="chat-input-container">
+            <div class="mode-popup" id="modePopup">
+                <div class="mode-option" data-mode="ideation">
+                    <span class="mode-title">Ideation</span>
+                </div>
+                <div class="mode-option" data-mode="conceptualization">
+                    <span class="mode-title">Conceptualization</span>
+                </div>
+                <div class="mode-option" data-mode="execution">
+                    <span class="mode-title">Execution</span>
+                </div>
+            </div>
+            <div class="agent-popup" id="agentPopup">
+                <div class="agent-option" data-agent="ergonomics">
+                    <input type="checkbox" id="agent-ergonomics" class="agent-checkbox">
+                    <div class="agent-label">
+                        <span class="agent-title">Ergonomics Agent</span>
+                    </div>
+                </div>
+                <div class="agent-option" data-agent="brand">
+                    <input type="checkbox" id="agent-brand" class="agent-checkbox">
+                    <div class="agent-label">
+                        <span class="agent-title">Brand Master</span>
+                    </div>
+                </div>
+                <div class="agent-option" data-agent="researcher">
+                    <input type="checkbox" id="agent-researcher" class="agent-checkbox">
+                    <div class="agent-label">
+                        <span class="agent-title">Design Researcher</span>
+                    </div>
+                </div>
+                <div class="agent-option" data-agent="cmft">
+                    <input type="checkbox" id="agent-cmft" class="agent-checkbox">
+                    <div class="agent-label">
+                        <span class="agent-title">CMFT Expert</span>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-controls-header">
+                <button id="chatControlsToggle" class="chat-controls-toggle" type="button" aria-expanded="true" aria-label="Toggle mode and agent controls" title="Collapse mode and agent controls">
+                    <span class="chat-controls-arrow" aria-hidden="true"></span>
+                </button>
+            </div>
+            <div class="controls-row">
+                <div class="mode-selector">
+                    <label>Mode:</label>
+                    <button id="modeButton" class="mode-button">
+                        <span id="currentMode">Ideation</span>
+                    </button>
+                </div>
+                <div class="agent-selector">
+                    <label>Agents:</label>
+                    <button id="agentButton" class="agent-button">
+                        <span id="agentCount">0</span>
+                    </button>
+                </div>
+            </div>
+            <div class="image-preview" id="imagePreview"></div>
+            <div class="input-wrapper">
+                <input type="file" id="imageInput" accept="image/*" style="display: none;">
+                <button id="imageButton" class="image-button" title="Attach image">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                        <polyline points="21 15 16 10 5 21"></polyline>
+                    </svg>
+                </button>
+                <div class="input-with-mic">
+                    <input 
+                        type="text" 
+                        id="messageInput" 
+                        placeholder="Type your message here..."
+                        autocomplete="off"
+                    >
+                    <button id="micButton" class="mic-button" title="Voice input  |  Right-click → Voice Mode">
+                        <svg class="mic-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                        </svg>
+                        <div class="voice-wave">
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                        </div>
+                    </button>
+
+                    <!-- Mic right-click menu -->
+                    <div class="mic-context-menu" id="micContextMenu">
+                        <div class="mic-context-item" id="micContextVoiceMode">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                <line x1="12" y1="19" x2="12" y2="23"></line>
+                                <line x1="8" y1="23" x2="16" y2="23"></line>
+                            </svg>
+                            Voice Mode
+                        </div>
+                    </div>
+                </div>
+                <button id="sendButton">Send</button>
+            </div>
+
+            <!-- Inline Voice Mode (replaces input row while active) -->
+            <div id="inlineVoiceMode" class="inline-voice-mode">
+                <div class="ivm-wave-container" id="ivmWaveContainer">
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                    <div class="ivm-bar"></div>
+                </div>
+                <div class="ivm-status" id="ivmStatus">Listening...</div>
+                <div class="ivm-transcript" id="ivmTranscript"></div>
+                <button class="ivm-close" id="ivmClose" title="Exit voice mode">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Panel -->
+    <div class="settings-panel" id="settingsPanel">
+        <div class="settings-panel-header">
+            <h2>Settings</h2>
+            <button id="closeSettingsBtn" class="close-settings-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="settings-content">
+            <!-- Appearance Section -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Appearance</h3>
+                <label class="toggle-row" for="nightModeToggle">
+                    <span class="toggle-label">Night Mode</span>
+                    <span class="toggle-control">
+                        <input type="checkbox" id="nightModeToggle" class="toggle-input">
+                        <span class="toggle-slider" aria-hidden="true"></span>
+                    </span>
+                </label>
+            </div>
+
+            <!-- Interface Color Section -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Interface Color</h3>
+                <div class="color-picker-group">
+                    <label for="primaryColor">Primary Color</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="primaryColor" class="color-picker" value="#667eea">
+                        <input type="text" id="primaryColorHex" class="color-hex-input" value="#667eea">
+                    </div>
+                </div>
+                <div class="color-picker-group">
+                    <label for="secondaryColor">Secondary Color</label>
+                    <div class="color-input-wrapper">
+                        <input type="color" id="secondaryColor" class="color-picker" value="#764ba2">
+                        <input type="text" id="secondaryColorHex" class="color-hex-input" value="#764ba2">
+                    </div>
+                </div>
+                <button id="resetColorsBtn" class="reset-btn">Reset to Default</button>
+            </div>
+
+            <!-- Custom Instructions Section -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Custom Instructions</h3>
+                <textarea 
+                    id="customInstructions" 
+                    class="custom-instructions-textarea" 
+                    placeholder="Add custom instructions for the AI assistant to follow during conversations..."
+                    rows="6"
+                ></textarea>
+                <div class="instruction-hint">These instructions will be applied to all chat interactions.</div>
+            </div>
+
+            <!-- Brand Master Folder Section -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Brand Master Resources</h3>
+                <div class="folder-input-group">
+                    <label for="brandMasterFolder">Brand Master Folder Path</label>
+                    <div class="folder-path-wrapper">
+                        <input 
+                            type="text" 
+                            id="brandMasterFolder" 
+                            class="folder-path-input" 
+                            placeholder="C:\path\to\brand\resources"
+                            readonly
+                        >
+                        <button id="browseFolderBtn" class="browse-btn">Browse</button>
+                    </div>
+                    <input type="file" id="folderInput" webkitdirectory directory multiple style="display: none;">
+                    <div class="folder-hint">Select a folder containing brand guidelines, style guides, and visual assets.</div>
+                </div>
+            </div>
+
+            <!-- Audio Test -->
+            <div class="settings-section">
+                <h3 class="settings-section-title">Audio Test</h3>
+                <div class="audio-test-row">
+                    <span class="audio-test-hint">Play a test tone to verify your speakers/headphones.</span>
+                    <button id="audioTestBtn" class="audio-test-btn">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                        </svg>
+                        Play Test Tone
+                    </button>
+                </div>
+            </div>
+
+            <!-- Save Settings Button -->
+            <div class="settings-footer">
+                <button id="saveSettingsBtn" class="save-settings-btn">Save Settings</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Mode Overlay (kept for JS compat, never shown) -->
+    <div id="voiceModeOverlay" style="display:none"></div>
+
+    <!-- Minimized Chat Button -->
+    <div class="minimized-chat" id="minimizedChat" style="display: none;">
+        <button id="restoreBtn" class="restore-btn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Co-Designer</span>
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="whiteboard-new.js"></script>
+    <script src="script.js"></script>
+    <script src="settings.js"></script>
+</body>
+</html>

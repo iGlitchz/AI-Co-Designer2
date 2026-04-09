@@ -1,0 +1,548 @@
+/* ==================== BUBBLE MODE OVERRIDES ====================
+   Applied only on bubble.html — the frameless always-on-top chat window.
+   Imports base style.css first, then these overrides apply on top.
+   ============================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    /* Override style.css body background (#e5e5e5) — bubble mode is transparent */
+    background: transparent !important;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --textbox-bg: rgba(255, 255, 255, 0.5);
+    --textbox-border: rgba(156, 166, 189, 0.65);
+    --primary-color: #667eea;
+    --secondary-color: #764ba2;
+}
+
+/* ── Main panel: bubble-specific overrides on top of .chat-window (style.css)
+   .chat-window already provides: position:fixed, right:40px, bottom:30px,
+   width:400px, height:600px, flex column layout, transitions.
+   We just tweak cosmetics here. ── */
+.bubble-panel {
+    border-radius: 14px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.28);
+}
+
+/* ── Titlebar: no OS-level drag region — JS dragging (script.js) handles it ── */
+.bubble-titlebar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 10px 14px;
+    background: linear-gradient(135deg, var(--primary-color, #667eea) 0%, var(--secondary-color, #764ba2) 100%);
+    color: #fff;
+    cursor: move;
+    user-select: none;
+    flex-shrink: 0;
+}
+
+.bubble-titlebar h2 {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+}
+
+/* ── Titlebar buttons: not draggable at OS level ── */
+.bubble-titlebar .titlebar-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.bubble-titlebar .window-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background 0.15s;
+    flex-shrink: 0;
+}
+
+.bubble-titlebar .window-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.bubble-titlebar .window-btn.active {
+    background: rgba(255, 255, 255, 0.34);
+}
+
+/* ── Chat view switcher row ── */
+.chat-view-switcher {
+    position: relative;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) minmax(0, 1fr);
+    align-items: center;
+    column-gap: 8px;
+    padding: 8px 16px;
+    background: #f5f5f5;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+/* ── Messages area fills remaining space ── */
+.bubble-body {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+}
+
+/* Reuse .chat-messages from style.css but make it fill bubble-body */
+.bubble-body .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.bubble-body .project-info-view {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+/* Ensure mode and agent selectors are properly laid out */
+.bubble-body .controls-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.bubble-body .mode-selector,
+.bubble-body .agent-selector {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+}
+
+.bubble-body .mode-selector label,
+.bubble-body .agent-selector label {
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.bubble-body .mode-button,
+.bubble-body .agent-button {
+    flex: 1;
+    min-width: 80px;
+    padding: 6px 10px;
+    border: 2px solid #9c27b0;
+    border-radius: 10px;
+    font-size: 12px;
+    background: white;
+    color: #333;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.bubble-body .mode-button:hover,
+.bubble-body .agent-button:hover {
+    background: #f9f0fc;
+}
+
+/* Ensure chat thread button doesn't interfere */
+.bubble-body .chat-thread-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: #667eea;
+}
+
+/* Inline voice mode styling */
+.bubble-body .inline-voice-mode {
+    display: none;
+    position: absolute;
+    bottom: 60px;
+    left: 14px;
+    right: 14px;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    padding: 12px;
+    gap: 8px;
+    z-index: 1001;
+}
+
+.bubble-body .inline-voice-mode.show {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Input area ── */
+.bubble-body .chat-input-container {
+    padding: 12px 14px;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+
+/* Ensure controls have proper layout */
+.bubble-body .chat-input-container .chat-controls-header {
+    display: flex;
+    justify-content: center;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.bubble-body .chat-input-container .controls-row {
+    display: flex;
+    gap: 12px;
+    max-height: 80px;
+    opacity: 1;
+    overflow: hidden;
+    transition: max-height 0.22s ease, opacity 0.18s ease;
+}
+
+.bubble-body .chat-input-container.controls-collapsed .controls-row {
+    max-height: 0;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Image preview section */
+.bubble-body .chat-input-container .image-preview {
+    display: none;
+    padding: 8px 0;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bubble-body .chat-input-container .image-preview.show {
+    display: flex;
+}
+
+/* Input wrapper (message + mic + send button) */
+.bubble-body .chat-input-container .input-wrapper {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.bubble-body .chat-input-container #messageInput {
+    flex: 1;
+    padding: 10px 36px 10px 14px;
+    border: 2px solid #e0e0e0;
+    border-radius: 20px;
+    font-size: 14px;
+    background: #f5f5f5;
+}
+
+.bubble-body .chat-input-container #messageInput:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+/* Ensure project info form values are visually obvious in bubble mode */
+.bubble-body .project-info-view .form-input,
+.bubble-body .project-info-view .form-textarea {
+    color: #1f2b45;
+}
+
+.bubble-body .project-info-view .form-input::placeholder,
+.bubble-body .project-info-view .form-textarea::placeholder {
+    color: #7a86a6;
+}
+
+.bubble-body .chat-input-container #sendButton {
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.bubble-body .chat-input-container #sendButton:hover {
+    opacity: 0.9;
+}
+
+.bubble-body .chat-input-container .mic-button {
+    position: absolute;
+    right: 50px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* ── Settings panel: absolute overlay within the bubble panel, hidden by default ── */
+.settings-panel {
+    position: absolute;
+    top: 0;
+    /* start off-screen to the right (override base style.css fixed positioning) */
+    right: -100%;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    border-radius: 0;
+    border-left: none;
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+    background: white;
+}
+
+.settings-panel.show {
+    right: 0;
+    z-index: 1000;
+}
+
+/* Ensure popups appear above everything */
+.bubble-body .chat-input-container .mode-popup,
+.bubble-body .chat-input-container .agent-popup {
+    z-index: 1001;
+}
+
+/* ── Keep whiteboard-only DOM stubs permanently invisible ── */
+#projectsMenu,
+#projectContextMenu,
+#topIndicatorBar {
+    display: none !important;
+    pointer-events: none !important;
+}
+
+/* Ensure view tabs have proper spacing and don't overlap */
+.bubble-body .view-tab {
+    padding: 8px 16px;
+    border: none;
+    background: transparent;
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.bubble-body .view-tab.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+/* Smooth chat messages with consistent styling */
+.bubble-body .message {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 4px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bubble-body .message-content {
+    word-wrap: break-word;
+    max-width: 100%;
+}
+
+.bubble-body .user-message {
+    justify-content: flex-end;
+}
+
+.bubble-body .bot-message .message-content {
+    background: #e8eef7;
+    color: #333;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+.bubble-body .user-message .message-content {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+}
+
+/* ── Night mode ── */
+body.night-mode .bubble-panel {
+    background: #1a1d2e;
+    color: #e0e0e0;
+}
+
+body.night-mode .bubble-body .chat-messages {
+    background: #1a1d2e;
+}
+
+body.night-mode .chat-view-switcher {
+    background: #23273a;
+    border-color: #333;
+}
+
+body.night-mode .bubble-body .chat-input-container {
+    background: #23273a;
+    border-top-color: #333;
+}
+
+body.night-mode .bubble-body #messageInput {
+    background: #2a2f42;
+    border-color: #333;
+    color: #e0e0e0;
+}
+
+body.night-mode .bubble-body .bot-message .message-content {
+    background: #333;
+    color: #e0e0e0;
+}
+
+body.night-mode .mode-button,
+body.night-mode .agent-button {
+    background: #2a2f42;
+    border-color: #9c27b0;
+    color: #e0e0e0;
+}
+
+/* Vision Mode Menu for bubble */
+.vision-mode-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 14px;
+    width: 180px;
+    background: #ffffff;
+    border: 1px solid #e5e8f0;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(15, 22, 38, 0.18);
+    z-index: 1200;
+    opacity: 0;
+    transform: translateY(-6px);
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    overflow: hidden;
+    padding: 4px;
+}
+.vision-mode-menu.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+.vision-header {
+    font-size: 11px;
+    font-weight: 700;
+    color: #6b7a99;
+    padding: 9px 12px 7px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-bottom: 1px solid #e9edf5;
+    margin: -4px -4px 4px -4px;
+}
+.vision-option {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #2f3a57;
+    transition: background 0.15s;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+}
+.vision-option:hover {
+    background: #f2f5ff;
+}
+.vision-option.active {
+    background: #eaf0ff;
+    font-weight: 600;
+    color: #667eea;
+}
+.vision-option svg {
+    flex-shrink: 0;
+}
+.vision-divider {
+    height: 1px;
+    background: #e9edf5;
+    margin: 4px 0;
+}
+.camera-device-select {
+    width: calc(100% - 8px);
+    padding: 6px 8px;
+    margin: 4px;
+    border: 1px solid #e5e8f0;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #2f3a57;
+    background: white;
+    cursor: pointer;
+}
+
+body.night-mode .vision-mode-menu {
+    background: #1a1d2e;
+    border-color: #333;
+}
+body.night-mode .vision-header {
+    color: #9ca3af;
+    border-bottom-color: #333;
+}
+body.night-mode .vision-option {
+    color: #e0e0e0;
+}
+body.night-mode .vision-option:hover {
+    background: #2a2f42;
+}
+body.night-mode .vision-option.active {
+    background: #333;
+    color: #667eea;
+}
+body.night-mode .camera-device-select {
+    background: #2a2f42;
+    border-color: #333;
+    color: #e0e0e0;
+}
+
+/* Eye button active state on bubble titlebar */
+#eyeBtn.active {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: #764ba2 !important;
+}
+
+/* ── Minimized chat button: above the transparent overlay ── */
+#minimizedChat {
+    position: fixed;
+    z-index: 10001;
+}
