@@ -1,6 +1,6 @@
 # AI CO-DESIGNER: A FRAMEWORK FOR ARTIFICIAL INTELLIGENCE AND INDUSTRIAL DESIGN COLLABORATION
 
-SimpleChatbot is a design-oriented AI collaboration environment built around multimodal, human-led design communication.
+AI CO-DESIGNER is a design-oriented AI collaboration environment built around multimodal, human-led design communication.
 
 ## Core Principle
 
