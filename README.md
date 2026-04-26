@@ -10,9 +10,9 @@ AI design tools should not only generate outputs. They should help designers com
 
 - Phase modes: Ideation, Conceptualization, Execution
 - Specialist design agents
+- Design Brain that gathers info from context and organizes them in project info
 - Text, voice, image, camera, and screen inputs
 - Whiteboard-based prototype workflow
-- Project memory and design context
 - AI image generation and remixing
 - TTS output
 - Electron desktop overlay mode
