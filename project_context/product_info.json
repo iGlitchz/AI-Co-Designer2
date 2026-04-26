@@ -2,46 +2,37 @@
   "productName": "",
   "direction": "",
   "size": {
-    "dimensions": "",
-    "scale": "",
-    "notes": ""
+    "dimensions": ""
   },
   "color": {
     "palette": [],
     "primary": "",
-    "secondary": "",
-    "notes": ""
+    "secondary": ""
   },
   "form": {
     "shape": "",
     "style": "",
-    "aesthetics": "",
-    "notes": ""
+    "aesthetics": ""
   },
   "context": {
     "useCase": "",
     "environment": "",
-    "targetAudience": "",
-    "notes": ""
+    "targetAudience": ""
   },
   "purpose": {
     "primaryFunction": "",
     "problemSolved": "",
-    "goals": [],
-    "notes": ""
+    "goals": []
   },
   "cmft": {
     "certifications": [],
     "materials": [],
     "finish": "",
-    "testing": [],
-    "notes": ""
+    "texture": []
   },
   "features": {
     "core": [],
-    "secondary": [],
-    "innovative": [],
-    "notes": ""
+    "secondary": []
   },
   "generalNotes": "",
   "lastUpdated": ""

@@ -1,255 +1,305 @@
-Creative Component: AI Co-Designer System Audit (Updated)
+Creative Component: AI Co-Designer System Blueprint (Thorough Update)
 Project: simplechatbot
-Date: 2026-04-05
+Date: 2026-04-22
 
-Purpose of this document
-This document reflects the current state of the codebase after recent updates. It maps implemented features to your thesis goals for a phase-adaptive, multimodal, human-in-the-loop AI co-designer.
+Document goal
+This file is the master explanation of what the software is, what it does today, and how it supports the core research objective:
 
-It explains:
-- What is implemented now
-- Which APIs/libraries power each capability
-- How recent fixes changed behavior
-- Which thesis principles are strongly covered and which are next-step opportunities
+Establishing design-style communication with AI through multimodal, human-led collaboration.
 
-==================================================
-1) Current System Architecture (End-to-End)
-==================================================
-
-Runtime structure
-- Frontend web UI served from public/ (chat, whiteboard, project info, settings, visual tools)
-- Backend API in server.js (chat orchestration, streaming, vision analysis, product info extraction, image generation, TTS)
-- Electron wrapper in electron/main.js (desktop mode and bubble mode)
-
-Current model/runtime path
-- Primary chat model route: OpenRouter
-- Primary model: google/gemma-3-4b-it
-- Fallback model: google/gemma-3n-e4b-it:free
-- Image generation route: Runware WebSocket API
-- Current image model env: RUNWARE_IMAGE_MODEL (default openai:4@1)
-
-Main workflow
-1. User inputs text, voice, image, screen capture, live camera frame, or whiteboard artifacts.
-2. Frontend sends to /api/chat or /api/chat/stream and/or /api/generate-image and/or /api/tts.
-3. Backend composes system prompt from selected phase mode + selected agents + project context + optional vision analysis.
-4. OpenRouter model responds (streaming where possible, non-stream fallback if stream fails).
-5. Product info is extracted/merged and returned to frontend for auto-fill.
-6. Outputs can be spoken, dragged to whiteboard, or transformed through image generation/remix.
+In simple terms:
+- The system is not just a chatbot.
+- It is a design communication environment.
+- It helps the designer and AI co-construct ideas using text, voice, visuals, and evolving project context.
 
 ==================================================
-2) Core APIs, Libraries, and External Services
+1) Core Product Positioning
 ==================================================
 
-AI reasoning and orchestration
-- OpenRouter chat completions API
-- Model routing in server.js supports explicit model override and strict/no-fallback mode
+Primary purpose
+- Help a designer communicate intent, style, constraints, and decisions to AI across a full design process.
 
-Vision understanding
-- Google Cloud Vision API
-- Used for labels, OCR text, objects, and color context before reasoning
+Design communication focus
+- Ideation: broad exploration and framing
+- Conceptualization: developing and critiquing direction
+- Execution: concrete implementation and refinement guidance
 
-Image generation and image-to-image
-- Runware WebSocket API (wss://ws-api.runware.ai/v1)
-- Uses imageInference for generation
-- Current implementation supports:
-  - text-to-image
-  - image-to-image with OpenAI image models via inputs.referenceImages
-  - fallback i2i path for non-OpenAI models via imageUpload + seedImage UUID
+What makes this a creative component
+- Phase-adaptive prompting (mode-specific behavior)
+- Multimodal inputs (voice, image, screen, camera, whiteboard artifacts)
+- Persistent project memory (project info + chat continuity)
+- Human-in-the-loop controls (user chooses mode, agents, inputs, and direction)
 
-Speech output
-- kokoro-js + local ONNX assets
-- Endpoint: /api/tts (returns WAV)
+==================================================
+2) Critical Clarification of Vision Inputs
+==================================================
 
-Speech input
+Live camera feed (prototype role)
+- The live camera feed is a prototyping communication channel.
+- Its purpose is to quickly show physical sketches, rough mockups, material samples, hand gestures, and in-progress prototypes to the AI.
+- It is intended to increase communication bandwidth during design conversations, not to function as surveillance or passive monitoring.
+
+Live screen capture (design artifact role)
+- The live screen input is meant for sharing design artifacts such as:
+  - storyboards
+  - journey maps
+  - interface flows
+  - references and moodboards
+  - CAD or layout snapshots
+- It provides contextual evidence so the AI can critique, synthesize, and align outputs with what the designer is actually seeing.
+
+Why this matters
+- Camera supports communication from physical-world prototype to AI.
+- Screen supports communication from digital design process to AI.
+- Together, they create a richer "design style communication" loop than text alone.
+
+==================================================
+3) Updated Feature Inventory (Current Implementation)
+==================================================
+
+A. Interaction and input channels
+- Text chat input and threaded conversation history
+- Voice dictation and voice interaction loop
+- Image upload, paste, and drag/drop into chat
+- Vision mode with selectable source:
+  - screen capture
+  - live camera feed
+- Whiteboard as an interactive workspace for images/text/artifacts
+
+B. AI behavior and orchestration
+- OpenRouter-based chat completion path
+- Streaming response path with non-stream fallback
+- Phase mode logic from modes.conf:
+  - ideation
+  - conceptualization
+  - execution
+- Specialist agent prompt overlays:
+  - brand master
+  - design researcher
+  - ergonomics agent
+  - CMFT expert
+
+C. Visual reasoning and generation
+- Google Cloud Vision pre-analysis of visual inputs
+- Runware image generation via WebSocket
+- Text-to-image and image-to-image support
+- Seed/reference image handling for iterative remix workflows
+
+D. Project continuity and memory
+- Multi-project management
+- Multi-chat threads per project
+- Product info extraction, merge, and auto-fill syncing
+- Persistent local state to preserve design context across sessions
+
+E. Output and transformation tools
+- TTS output via kokoro-js and local ONNX model assets
+- Whiteboard actions:
+  - append selected images to chat
+  - analyze selected images
+  - remix selected images
+  - request technical feasibility
+
+F. Interface and runtime modes
+- Full interface (whiteboard + chat)
+- Bubble mode (compact always-on-top chat overlay)
+- Electron desktop runtime with global quick-toggle shortcut
+
+==================================================
+4) Updated Technical Stack and Services
+==================================================
+
+Backend and APIs
+- Node.js + Express
+- Endpoints:
+  - /api/chat
+  - /api/chat/stream
+  - /api/generate-image
+  - /api/tts
+
+AI and generation services
+- OpenRouter (chat reasoning)
+- Google Cloud Vision API (image understanding)
+- Runware WebSocket API (image generation)
+
+Client/runtime technologies
+- Browser media APIs (camera, mic, screen)
 - Browser SpeechRecognition/webkitSpeechRecognition
-- Supports dictation and voice mode loops
+- Electron desktop shell for persistent overlay behavior
 
-Other key libraries
-- express, axios, ws, crypto, dotenv, marked
-
-==================================================
-3) Major Recent Updates Reflected in Code
-==================================================
-
-1. Project Info pipeline hardened
-- Product info extraction now consistently merged and returned in chat responses.
-- Frontend sync path updates live project object and reloads form fields reliably.
-- Added ProductInfoDebug logging on both backend and frontend.
-
-2. Streaming reliability improved
-- SSE buffering and residual parsing improved on frontend.
-- Backend /api/chat/stream now falls back to non-stream response if streaming fails.
-
-3. Visual mode behavior now strict
-- When visual mode is enabled, frontend routes message flow to image generation.
-- Attached image, screen capture, and camera frame can feed generation as seed input.
-
-4. Runware model and dimensions standardized
-- Uses RUNWARE_IMAGE_MODEL with explicit 1024x1024 generation dimensions.
-
-5. Image-to-image payload updated for GPT Image models
-- OpenAI image models on Runware now use inputs.referenceImages for i2i.
-- Non-OpenAI path still supports seedImage via imageUpload UUID flow.
-
-6. Bubble mode interaction fixes
-- Bubble titlebar now correctly anchors dropdown overlays.
-- Bubble click-through handling improved so header controls (including eye button) are responsive.
+Key libraries in use
+- express
+- axios
+- ws
+- crypto
+- dotenv
+- marked
+- kokoro-js
 
 ==================================================
-4) Feature Inventory and Thesis Principle Mapping
+5) End-to-End System Flow (Infographic Style)
 ==================================================
 
-A) Multimodal co-design input (Strong)
-- Text chat
-- Voice dictation and conversational voice mode
-- Image upload/paste/drag-drop
-- Screen capture and camera vision input
-- Whiteboard artifacts as analysis/remix inputs
+High-level communication pipeline
 
-Thesis relevance
-- Design dialogue is not text-only; visual and verbal artifacts are first-class inputs.
-
-B) Non-linear remix loop (Strong)
-- Chat-to-whiteboard drag/drop for text and images
-- Whiteboard analyze/remix/feasibility actions
-- Visual mode generation and multi-image requests
-
-Thesis relevance
-- Supports iterative make-critique-remix cycles rather than linear prompt-response use.
-
-C) Iterative memory and continuity (Strong)
-- Project + multi-chat history per project
-- Product info schema with extraction and UI auto-fill
-- Local persistence and context replay in requests
-
-Thesis relevance
-- Enables long-horizon co-design continuity and cumulative context.
-
-D) Human control and agency (Strong)
-- User controls phase mode, specialist agents, vision mode, voice mode, and visual generation paths
-- User can directly curate structured project info fields
-
-Thesis relevance
-- AI acts as configurable collaborator, not autonomous authority.
-
-E) Critical evaluation behavior (Strong)
-- analyze mode overlays phase-specific critique prompts
-- Vision analysis used to ground critique for image-based discussions
-- Feasibility-oriented workflows and CMFT framing supported
-
-Thesis relevance
-- Convergent, skeptical evaluation is operationalized in code.
-
-F) Phase-adaptive cognition (Strong)
-- ideation, conceptualization, and execution prompts loaded from modes.conf
-- Different behavior expectations by phase are enforced at prompt layer
-
-Thesis relevance
-- Matches staged design workflow instead of one static assistant behavior.
-
-G) Diversity generation (Moderate to strong)
-- Multiple agents provide perspective diversity
-- Visual generation can produce variants
-- Remix actions support alternate visual directions
-
-Opportunity
-- Add explicit forced-alternatives controls/metrics for stronger thesis measurability.
+[Designer Intent]
+      |
+      v
+[Input Layer]
+Text | Voice | Image | Camera Prototype Feed | Screen Storyboard/Journey-Map Feed | Whiteboard Artifacts
+      |
+      v
+[Context Layer]
+Mode (Ideation/Conceptualization/Execution)
++ Selected Specialist Agents
++ Project Info Memory
++ Recent Chat History
+      |
+      v
+[Interpretation Layer]
+Vision Analysis (OCR/labels/colors/objects) + Prompt Assembly
+      |
+      v
+[Reasoning/Generation Layer]
+OpenRouter Chat + Runware Image Generation + Optional TTS
+      |
+      v
+[Output Layer]
+Response Text | Generated Visuals | Spoken Output | Structured Product Info Updates
+      |
+      v
+[Design Iteration Loop]
+Drag to Whiteboard -> Critique/Remix/Feasibility -> Re-inject into Chat -> Refine Direction
 
 ==================================================
-5) Current Endpoint Responsibilities
+6) Flowchart Block for Presentation Use
 ==================================================
 
-/api/chat
-- Non-streaming response path
-- Applies mode + agents + project context + optional image analysis
-- Returns response + provider/mode metadata + updated productInfo
+Use this Mermaid block in documentation/presentation tools that support Mermaid.
 
-/api/chat/stream
-- SSE token streaming path
-- Falls back to non-stream response if needed
-- Returns done event containing provider/mode/productInfo
+```mermaid
+flowchart TD
+    A[Designer Goal and Style Intent] --> B{Input Modality}
 
-/api/generate-image
-- Builds image prompt with project info context
-- Supports seed-image i2i requests
-- Uses Runware and proxies generated image bytes back to client
+    B --> B1[Text and Voice]
+    B --> B2[Camera Feed for Physical Prototypes]
+    B --> B3[Screen Feed for Storyboards and Journey Maps]
+    B --> B4[Whiteboard Artifacts]
 
-/api/tts
-- Generates WAV speech from response text using Kokoro
+    B1 --> C[Context Builder]
+    B2 --> C
+    B3 --> C
+    B4 --> C
+
+    C --> C1[Phase Mode: Ideation, Conceptualization, Execution]
+    C --> C2[Specialist Agents]
+    C --> C3[Project Memory and Chat History]
+
+    C1 --> D[AI Orchestration Layer]
+    C2 --> D
+    C3 --> D
+
+    D --> D1[Vision Analysis]
+    D --> D2[OpenRouter Reasoning]
+    D --> D3[Runware Image Generation]
+    D --> D4[Kokoro TTS]
+
+    D1 --> E[Co-Design Outputs]
+    D2 --> E
+    D3 --> E
+    D4 --> E
+
+    E --> E1[Design Guidance]
+    E --> E2[Visual Variants]
+    E --> E3[Structured Project Info Updates]
+
+    E1 --> F[Human Evaluation and Selection]
+    E2 --> F
+    E3 --> F
+
+    F --> G[Whiteboard Remix and Feasibility Checks]
+    G --> A
+```
 
 ==================================================
-6) File-to-Capability Map (Current)
+7) Thesis Alignment (Direct Mapping)
+==================================================
+
+Research statement supported by the system
+- The software demonstrates that AI design collaboration improves when communication is multimodal, phase-aware, and artifact-grounded rather than prompt-only.
+
+Strongly supported dimensions
+- Multimodal communication
+- Human agency and controllability
+- Iterative divergence/convergence loops
+- Persistent memory and project continuity
+- Critique and feasibility-oriented collaboration
+
+Most important evidence in this build
+- Camera input is explicitly usable for prototype communication.
+- Screen input is explicitly usable for storyboard and journey-map communication.
+- Whiteboard and chat are linked into a cyclical design loop.
+
+==================================================
+8) File-to-Capability Reference Map
 ==================================================
 
 Backend orchestration
 - server.js
 
-Mode logic
+Mode definitions
 - modes.conf
 
-Agent prompts
-- agent_resources/ergonomics_agent.md
+Agent prompt resources
 - agent_resources/brand_master.md
 - agent_resources/design_researcher.md
+- agent_resources/ergonomics_agent.md
 - agent_resources/cmft_expert.md
 
-Project info schema
-- project_context/product_info.json
-
-Frontend core behavior
+Frontend main behavior
 - public/script.js
 - public/index.html
 - public/style.css
-- public/whiteboard-new.js
-- public/settings.js
 
-Bubble mode UI
+Whiteboard workflows
+- public/whiteboard-new.js
+- public/whiteboard.js
+
+Bubble overlay mode
 - public/bubble.html
 - public/bubble.css
 
-Desktop runtime
+Settings and customization
+- public/settings.js
+
+Desktop runtime shell
 - electron/main.js
 - electron/preload.js
 
-Build/runtime config
-- package.json
-- .env
+Project schema
+- project_context/product_info.json
 
 ==================================================
-7) Dependency and Config Snapshot (Current)
+9) Current Environment/Configuration Notes
 ==================================================
 
-Primary required environment keys
+Key environment variables
 - OPENROUTER_API_KEY
-- GOOGLE_CLOUD_VISION_API_KEY (for image analysis)
-- RUNWARE_API_KEY (for image generation)
+- GOOGLE_CLOUD_VISION_API_KEY
+- RUNWARE_API_KEY
+- RUNWARE_IMAGE_MODEL
 
-Current image model config
-- RUNWARE_IMAGE_MODEL=openai:4@1
-
-Note on legacy config
-- MISTRAL_API_KEY may still exist in .env/package metadata, but active chat path is OpenRouter in current server implementation.
+Current chat model behavior
+- Primary model configured through OpenRouter primary model setting
+- Fallback model used when primary call fails
 
 ==================================================
-8) Thesis Readiness Snapshot
+10) Recommended Caption for Your Infographic
 ==================================================
 
-Strongly addressed now
-- Multimodal interaction
-- Phase-adaptive prompting
-- Human-in-the-loop controls
-- Critical analysis behavior
-- Persistent iterative workflow with structured memory
-- Integrated visual generation/remix pipeline
+Suggested title
+- Design Style Communication Engine: A Multimodal AI Co-Designer
 
-Partially addressed / next upgrades
-- Add explicit comparison tools (A/B decision matrix, rubric scoring)
-- Add built-in instrumentation for research metrics:
-  - iteration counts
-  - alternatives generated
-  - critique depth indicators
-  - phase transition frequency
+Suggested one-sentence caption
+- This system enables designers to communicate intent to AI through text, voice, camera-based prototype sharing, and screen-based storyboard/journey-map sharing, then iteratively refine outcomes through memory-aware co-design loops.
 
-Suggested concise thesis framing sentence
-- This prototype demonstrates a phase-adaptive, multimodal, human-in-the-loop AI co-designer that supports iterative divergence and convergence through persistent context, artifact-based interaction, and integrated visual generation workflows.
-
-End of document.
+End of updated creative component document.

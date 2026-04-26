@@ -59,7 +59,11 @@ async function callOpenRouter(messages, options = {}) {
 
   const sendRequest = async (model) => axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
-    { model, messages },
+    {
+      model,
+      messages,
+      temperature: typeof options.temperature === 'number' ? options.temperature : undefined
+    },
     {
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
@@ -90,12 +94,17 @@ async function callOpenRouter(messages, options = {}) {
   return content.trim();
 }
 
-async function callOpenRouterStream(messages, sendFn) {
+async function callOpenRouterStream(messages, sendFn, options = {}) {
   if (!OPENROUTER_API_KEY) throw new Error('OpenRouter API key not configured');
 
   const sendStreamRequest = async (model) => axios.post(
     'https://openrouter.ai/api/v1/chat/completions',
-    { model, messages, stream: true },
+    {
+      model,
+      messages,
+      stream: true,
+      temperature: typeof options.temperature === 'number' ? options.temperature : undefined
+    },
     {
       headers: {
         'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
@@ -201,8 +210,6 @@ function loadModeConfig() {
   }
 }
 
-const modes = loadModeConfig();
-
 // Load agent resources
 function loadAgentResources(agentType) {
   try {
@@ -228,8 +235,12 @@ function loadAgentResources(agentType) {
 }
 
 // Build enhanced system prompt with agent context
-function buildAgentPrompt(basePrompt, agents, projectContext, imageAnalysis = null) {
+function buildAgentPrompt(basePrompt, agents, projectContext, imageAnalysis = null, modeConstraints = null) {
   let enhancedPrompt = basePrompt || 'You are a helpful design assistant.';
+
+  if (modeConstraints?.rules) {
+    enhancedPrompt += `\n\n## OUTPUT CONSTRAINTS\n${modeConstraints.rules}\nThese constraints override all other style instructions.`;
+  }
   
   // Add project context if available
   if (projectContext && Object.keys(projectContext).some(key => projectContext[key] && projectContext[key] !== '')) {
@@ -259,7 +270,7 @@ function buildAgentPrompt(basePrompt, agents, projectContext, imageAnalysis = nu
       }
     });
     
-    enhancedPrompt += `\nIMPORTANT: Provide a comprehensive response that integrates insights from all ${agents.length} agent perspective(s). Structure your response with clear sections for each agent's analysis, using their specialized knowledge and frameworks. Be thorough, specific, and actionable.`;
+    enhancedPrompt += `\nIMPORTANT: Integrate the most relevant insights from selected agents, but keep response length and style aligned with OUTPUT CONSTRAINTS. Do not produce long multi-section writeups unless the user explicitly asks for them.`;
   }
   
   return enhancedPrompt;
@@ -341,16 +352,45 @@ function buildVisionGroundedUserPrompt(visionSummary, userPrompt = '', analyze =
   ].join('\n');
 }
 
+function getModeResponseConstraints(mode, analyze = false) {
+  if (analyze) {
+    return {
+      temperature: 0.5,
+      rules: 'ANALYZE MODE OVERRIDE: Be thorough and specific. Use compact paragraphs, but depth is allowed when needed.'
+    };
+  }
+
+  const byMode = {
+    ideation: {
+      temperature: 0.65,
+      rules: 'HARD OUTPUT RULES: 1) Reply in 2 to 4 sentences. 2) No lists, no bullets, no numbered sections. 3) NEVER propose a direction or pick features for the designer. Never say lets do, we want, or we should. 4) Reflect briefly on what the designer said, then ask a short open-ended question about what to explore next. 5) Use only tentative language (could/might/that could go a few ways).'
+    },
+    conceptualization: {
+      temperature: 0.45,
+      rules: 'HARD OUTPUT RULES: 1) Reply in 2 to 4 sentences unless user explicitly asks for more. 2) No lists, no bullets, no numbered sections. 3) Give one or two focused refinements only.'
+    },
+    execution: {
+      temperature: 0.3,
+      rules: 'HARD OUTPUT RULES: 1) Reply in 1 to 3 short sentences unless user asks for detail. 2) No lists or extra explanation. 3) Be direct and literal.'
+    }
+  };
+
+  return byMode[mode] || {
+    temperature: 0.5,
+    rules: 'HARD OUTPUT RULES: Keep it concise and on-topic.'
+  };
+}
+
 function getDefaultProductInfo() {
   return {
     productName: '', direction: '',
-    size: { dimensions: '', scale: '', notes: '' },
-    color: { palette: [], primary: '', secondary: '', notes: '' },
-    form: { shape: '', style: '', aesthetics: '', notes: '' },
-    context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-    purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-    cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-    features: { core: [], secondary: [], innovative: [], notes: '' },
+    size: { dimensions: '', scale: '' },
+    color: { palette: [], primary: '', secondary: '' },
+    form: { shape: '', style: '', aesthetics: '' },
+    context: { useCase: '', environment: '', targetAudience: '' },
+    purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+    cmft: { certifications: [], materials: [], finish: '', testing: [] },
+    features: { core: [], secondary: [], innovative: [] },
     generalNotes: ''
   };
 }
@@ -527,13 +567,13 @@ Return ONLY valid JSON with this exact shape:
 {
   "productName": "",
   "direction": "",
-  "size": { "dimensions": "", "scale": "", "notes": "" },
-  "color": { "palette": [], "primary": "", "secondary": "", "notes": "" },
-  "form": { "shape": "", "style": "", "aesthetics": "", "notes": "" },
-  "context": { "useCase": "", "environment": "", "targetAudience": "", "notes": "" },
-  "purpose": { "primaryFunction": "", "problemSolved": "", "goals": [], "notes": "" },
-  "cmft": { "certifications": [], "materials": [], "finish": "", "testing": [], "notes": "" },
-  "features": { "core": [], "secondary": [], "innovative": [], "notes": "" },
+  "size": { "dimensions": "", "scale": "" },
+  "color": { "palette": [], "primary": "", "secondary": "" },
+  "form": { "shape": "", "style": "", "aesthetics": "" },
+  "context": { "useCase": "", "environment": "", "targetAudience": "" },
+  "purpose": { "primaryFunction": "", "problemSolved": "", "goals": [] },
+  "cmft": { "certifications": [], "materials": [], "finish": "", "testing": [] },
+  "features": { "core": [], "secondary": [], "innovative": [] },
   "generalNotes": ""
 }
 
@@ -713,8 +753,9 @@ app.post('/api/chat', async (req, res) => {
     // Use project-specific productInfo from request (not from file)
     const projectContext = productInfo || null;
     
-    // Get system prompt for selected mode
-    let systemPrompt = mode && modes[mode] ? modes[mode] : null;
+    // Reload mode config each request so modes.conf edits apply immediately
+    const activeModes = loadModeConfig();
+    let systemPrompt = mode && activeModes[mode] ? activeModes[mode] : null;
     
     // If analyze flag is set, enhance system prompt for critical analysis
     if (analyze && image) {
@@ -732,6 +773,8 @@ app.post('/api/chat', async (req, res) => {
       }
     }
     
+    const modeConstraints = getModeResponseConstraints(mode, !!(analyze && image));
+
     let finalMessage = message;
     let imageAnalysisContext = null;
     
@@ -758,15 +801,18 @@ app.post('/api/chat', async (req, res) => {
     
     // Build enhanced prompt with agent context if agents are selected
     if (agents && agents.length > 0) {
-      systemPrompt = buildAgentPrompt(systemPrompt, agents, projectContext, imageAnalysisContext);
+      systemPrompt = buildAgentPrompt(systemPrompt, agents, projectContext, imageAnalysisContext, modeConstraints);
     } else if (projectContext && Object.keys(projectContext).some(key => projectContext[key] && projectContext[key] !== '')) {
       // Add basic project context even without agents
-      systemPrompt = buildAgentPrompt(systemPrompt, [], projectContext, imageAnalysisContext);
+      systemPrompt = buildAgentPrompt(systemPrompt, [], projectContext, imageAnalysisContext, modeConstraints);
+    } else if (modeConstraints?.rules) {
+      systemPrompt = `${systemPrompt || ''}\n\n## OUTPUT CONSTRAINTS\n${modeConstraints.rules}`.trim();
     }
 
     const response = await callMistral(finalMessage, systemPrompt, conversationHistory, {
       model: openrouterModel,
-      allowFallback: strictModel ? false : true
+      allowFallback: strictModel ? false : true,
+      temperature: modeConstraints.temperature
     });
     console.log(`✅ Response from Mistral`);
     
@@ -776,13 +822,13 @@ app.post('/api/chat', async (req, res) => {
     if (extractionUserText) {
       updatedProductInfo = await extractProductInfo(extractionUserText, response, projectContext || {
         productName: '', direction: '',
-        size: { dimensions: '', scale: '', notes: '' },
-        color: { palette: [], primary: '', secondary: '', notes: '' },
-        form: { shape: '', style: '', aesthetics: '', notes: '' },
-        context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-        purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-        cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-        features: { core: [], secondary: [], innovative: [], notes: '' },
+        size: { dimensions: '', scale: '' },
+        color: { palette: [], primary: '', secondary: '' },
+        form: { shape: '', style: '', aesthetics: '' },
+        context: { useCase: '', environment: '', targetAudience: '' },
+        purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+        cmft: { certifications: [], materials: [], finish: '', testing: [] },
+        features: { core: [], secondary: [], innovative: [] },
         generalNotes: ''
       });
     }
@@ -831,7 +877,8 @@ app.post('/api/chat/stream', async (req, res) => {
     }
 
     const projectContext = productInfo || null;
-    let systemPrompt = mode && modes[mode] ? modes[mode] : null;
+    const activeModes = loadModeConfig();
+    let systemPrompt = mode && activeModes[mode] ? activeModes[mode] : null;
 
     if (analyze && image) {
       const criticalPrompts = {
@@ -841,6 +888,8 @@ app.post('/api/chat/stream', async (req, res) => {
       };
       systemPrompt = criticalPrompts[mode] || `${systemPrompt || ''} Provide detailed critical analysis of this image.`;
     }
+
+    const modeConstraints = getModeResponseConstraints(mode, !!(analyze && image));
 
     let finalMessage = message;
     let imageAnalysisContext = null;
@@ -860,9 +909,11 @@ app.post('/api/chat/stream', async (req, res) => {
     }
 
     if (agents && agents.length > 0) {
-      systemPrompt = buildAgentPrompt(systemPrompt, agents, projectContext, imageAnalysisContext);
+      systemPrompt = buildAgentPrompt(systemPrompt, agents, projectContext, imageAnalysisContext, modeConstraints);
     } else if (projectContext && Object.keys(projectContext).some(k => projectContext[k] && projectContext[k] !== '')) {
-      systemPrompt = buildAgentPrompt(systemPrompt, [], projectContext, imageAnalysisContext);
+      systemPrompt = buildAgentPrompt(systemPrompt, [], projectContext, imageAnalysisContext, modeConstraints);
+    } else if (modeConstraints?.rules) {
+      systemPrompt = `${systemPrompt || ''}\n\n## OUTPUT CONSTRAINTS\n${modeConstraints.rules}`.trim();
     }
 
     const msgs = [];
@@ -872,12 +923,16 @@ app.post('/api/chat/stream', async (req, res) => {
 
     let fullResponse = '';
     try {
-      fullResponse = await callOpenRouterStream(msgs, send);
+      fullResponse = await callOpenRouterStream(msgs, send, {
+        temperature: modeConstraints.temperature
+      });
       console.log(`✅ Streamed response (${fullResponse.length} chars)`);
     } catch (streamError) {
       const status = streamError?.response?.status || 'unknown';
       console.warn(`⚠️ Streaming failed (${status}). Falling back to non-stream response.`);
-      fullResponse = await callOpenRouter(msgs);
+      fullResponse = await callOpenRouter(msgs, {
+        temperature: modeConstraints.temperature
+      });
       if (fullResponse) {
         // Keep SSE contract intact so the frontend can render and persist response.
         send({ token: fullResponse });
@@ -889,13 +944,13 @@ app.post('/api/chat/stream', async (req, res) => {
     if (extractionUserText) {
       updatedProductInfo = await extractProductInfo(extractionUserText, fullResponse, projectContext || {
         productName: '', direction: '',
-        size: { dimensions: '', scale: '', notes: '' },
-        color: { palette: [], primary: '', secondary: '', notes: '' },
-        form: { shape: '', style: '', aesthetics: '', notes: '' },
-        context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-        purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-        cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-        features: { core: [], secondary: [], innovative: [], notes: '' },
+        size: { dimensions: '', scale: '' },
+        color: { palette: [], primary: '', secondary: '' },
+        form: { shape: '', style: '', aesthetics: '' },
+        context: { useCase: '', environment: '', targetAudience: '' },
+        purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+        cmft: { certifications: [], materials: [], finish: '', testing: [] },
+        features: { core: [], secondary: [], innovative: [] },
         generalNotes: ''
       });
     }

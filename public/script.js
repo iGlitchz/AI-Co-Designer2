@@ -2317,13 +2317,13 @@ function loadProjects() {
                 project.productInfo = {
                     productName: '',
                     direction: '',
-                    size: { dimensions: '', scale: '', notes: '' },
-                    color: { palette: [], primary: '', secondary: '', notes: '' },
-                    form: { shape: '', style: '', aesthetics: '', notes: '' },
-                    context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-                    purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-                    cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-                    features: { core: [], secondary: [], innovative: [], notes: '' },
+                    size: { dimensions: '', scale: '' },
+                    color: { palette: [], primary: '', secondary: '' },
+                    form: { shape: '', style: '', aesthetics: '' },
+                    context: { useCase: '', environment: '', targetAudience: '' },
+                    purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+                    cmft: { certifications: [], materials: [], finish: '', testing: [] },
+                    features: { core: [], secondary: [], innovative: [] },
                     generalNotes: ''
                 };
             }
@@ -2381,13 +2381,13 @@ function loadProjects() {
             productInfo: {
                 productName: '',
                 direction: '',
-                size: { dimensions: '', scale: '', notes: '' },
-                color: { palette: [], primary: '', secondary: '', notes: '' },
-                form: { shape: '', style: '', aesthetics: '', notes: '' },
-                context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-                purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-                cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-                features: { core: [], secondary: [], innovative: [], notes: '' },
+                size: { dimensions: '', scale: '' },
+                color: { palette: [], primary: '', secondary: '' },
+                form: { shape: '', style: '', aesthetics: '' },
+                context: { useCase: '', environment: '', targetAudience: '' },
+                purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+                cmft: { certifications: [], materials: [], finish: '', testing: [] },
+                features: { core: [], secondary: [], innovative: [] },
                 generalNotes: ''
             },
             created: now,
@@ -2544,13 +2544,13 @@ function createNewProject() {
         productInfo: {
             productName: '',
             direction: '',
-            size: { dimensions: '', scale: '', notes: '' },
-            color: { palette: [], primary: '', secondary: '', notes: '' },
-            form: { shape: '', style: '', aesthetics: '', notes: '' },
-            context: { useCase: '', environment: '', targetAudience: '', notes: '' },
-            purpose: { primaryFunction: '', problemSolved: '', goals: [], notes: '' },
-            cmft: { certifications: [], materials: [], finish: '', testing: [], notes: '' },
-            features: { core: [], secondary: [], innovative: [], notes: '' },
+            size: { dimensions: '', scale: '' },
+            color: { palette: [], primary: '', secondary: '' },
+            form: { shape: '', style: '', aesthetics: '' },
+            context: { useCase: '', environment: '', targetAudience: '' },
+            purpose: { primaryFunction: '', problemSolved: '', goals: [] },
+            cmft: { certifications: [], materials: [], finish: '', testing: [] },
+            features: { core: [], secondary: [], innovative: [] },
             generalNotes: ''
         },
         created: now,
@@ -3353,38 +3353,38 @@ function loadProductInfoToForm(autoFilled = false) {
 
     setField('sizeDimensions', info.size?.dimensions || '');
     setField('sizeScale', info.size?.scale || '');
-    setField('sizeNotes', info.size?.notes || '');
+
 
     setField('colorPalette', info.color?.palette?.join(', ') || '');
     setField('colorPrimary', info.color?.primary || '');
     setField('colorSecondary', info.color?.secondary || '');
-    setField('colorNotes', info.color?.notes || '');
+
 
     setField('formShape', info.form?.shape || '');
     setField('formStyle', info.form?.style || '');
     setField('formAesthetics', info.form?.aesthetics || '');
-    setField('formNotes', info.form?.notes || '');
+
 
     setField('contextUseCase', info.context?.useCase || '');
     setField('contextEnvironment', info.context?.environment || '');
     setField('contextTarget', info.context?.targetAudience || '');
-    setField('contextNotes', info.context?.notes || '');
+
 
     setField('purposeFunction', info.purpose?.primaryFunction || '');
     setField('purposeProblem', info.purpose?.problemSolved || '');
     setField('purposeGoals', info.purpose?.goals?.join(', ') || '');
-    setField('purposeNotes', info.purpose?.notes || '');
+
 
     setField('cmftCertifications', info.cmft?.certifications?.join(', ') || '');
     setField('cmftMaterials', info.cmft?.materials?.join(', ') || '');
     setField('cmftFinish', info.cmft?.finish || '');
     setField('cmftTesting', info.cmft?.testing?.join(', ') || '');
-    setField('cmftNotes', info.cmft?.notes || '');
+
 
     setField('featuresCore', info.features?.core?.join(', ') || '');
     setField('featuresSecondary', info.features?.secondary?.join(', ') || '');
     setField('featuresInnovative', info.features?.innovative?.join(', ') || '');
-    setField('featuresNotes', info.features?.notes || '');
+
 
     setField('generalNotes', info.generalNotes || '');
 
@@ -3432,45 +3432,38 @@ function buildProductInfoFromFormValues() {
         direction: getValue('direction'),
         size: {
             dimensions: getValue('sizeDimensions'),
-            scale: getValue('sizeScale'),
-            notes: getValue('sizeNotes')
+            scale: getValue('sizeScale')
         },
         color: {
             palette: parseList(getValue('colorPalette')),
             primary: getValue('colorPrimary'),
-            secondary: getValue('colorSecondary'),
-            notes: getValue('colorNotes')
+            secondary: getValue('colorSecondary')
         },
         form: {
             shape: getValue('formShape'),
             style: getValue('formStyle'),
-            aesthetics: getValue('formAesthetics'),
-            notes: getValue('formNotes')
+            aesthetics: getValue('formAesthetics')
         },
         context: {
             useCase: getValue('contextUseCase'),
             environment: getValue('contextEnvironment'),
-            targetAudience: getValue('contextTarget'),
-            notes: getValue('contextNotes')
+            targetAudience: getValue('contextTarget')
         },
         purpose: {
             primaryFunction: getValue('purposeFunction'),
             problemSolved: getValue('purposeProblem'),
-            goals: parseList(getValue('purposeGoals')),
-            notes: getValue('purposeNotes')
+            goals: parseList(getValue('purposeGoals'))
         },
         cmft: {
             certifications: parseList(getValue('cmftCertifications')),
             materials: parseList(getValue('cmftMaterials')),
             finish: getValue('cmftFinish'),
-            testing: parseList(getValue('cmftTesting')),
-            notes: getValue('cmftNotes')
+            testing: parseList(getValue('cmftTesting'))
         },
         features: {
             core: parseList(getValue('featuresCore')),
             secondary: parseList(getValue('featuresSecondary')),
-            innovative: parseList(getValue('featuresInnovative')),
-            notes: getValue('featuresNotes')
+            innovative: parseList(getValue('featuresInnovative'))
         },
         generalNotes: getValue('generalNotes')
     };

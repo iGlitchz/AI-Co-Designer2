@@ -4,11 +4,13 @@ dist/
 build/
 out/
 coverage/
+logs/
 .env
 .env.local
 .env.*.local
 *.log
 .vscode/
+.idea/
 .DS_Store
 Thumbs.db
 venv/
@@ -17,3 +19,4 @@ __pycache__/
 *.pyc
 kokoro-v1.0.onnx
 voices.bin
+project_context/product_info.json
