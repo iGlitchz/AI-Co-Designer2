@@ -1,17 +1,17 @@
-# SimpleChatbot: AI Co-Designer System
+# AI CO-DESIGNER: A FRAMEWORK FOR ARTIFICIAL INTELLIGENCE AND INDUSTRIAL DESIGN COLLABORATION
 
 SimpleChatbot is a design-oriented AI collaboration environment built around multimodal, human-led design communication.
 
 ## Core Principle
 
-AI design tools should not only generate outputs. They should help designers communicate intent, constraints, artifacts, style, and critique across the full design process.
+AI design tools should not only generate outputs. They should help designers communicate intent, constraints, prototypes, style, and critique across the full design process.
 
 ## Features
 
 - Phase modes: Ideation, Conceptualization, Execution
 - Specialist design agents
 - Text, voice, image, camera, and screen inputs
-- Whiteboard-based artifact workflow
+- Whiteboard-based prototype workflow
 - Project memory and design context
 - AI image generation and remixing
 - TTS output
@@ -21,13 +21,9 @@ AI design tools should not only generate outputs. They should help designers com
 
 1. Clone the repository.
 2. Install dependencies:
+
 ```bash
 npm install
-```
-3. Copy `.env.example` to `.env` and add your own API keys.
-4. Start the app:
-```bash
-npm start
 ```
 
 For desktop mode in development:
@@ -35,6 +31,21 @@ For desktop mode in development:
 ```bash
 npm run app
 ```
+
+### Overlay Mode (Float on Top of Any App)
+
+`npm run bubble` launches a compact floating overlay window that stays on top of all other applications. Use this to keep the AI co-designer visible while working in Figma, Rhino, Illustrator, or any other tool.
+
+```bash
+npm run bubble
+```
+
+Steps:
+1. Run `npm run bubble` in the terminal.
+2. The overlay window will appear in the top-right corner of your screen.
+3. It floats above all other open applications — switch to any app and the overlay remains visible.
+4. Use the overlay to send messages, capture screenshots, and receive AI feedback without leaving your design tool.
+5. To close, click the X button on the overlay or stop the terminal process with `Ctrl+C`.
 
 Build a Windows installer:
 
